@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<title>PA1</title>
+<style>
+    body {
+        background-color: #EEEEEE;
+    }
+</style>
+
+<script src="./Utils/trackball-rotator.js"></script>
+<script src="./Utils/m4.js"></script>
+<script src="./shader.gpu"></script>
+<script src="./main.js"></script>
+
+</head>
+<body onload="init()">
+
+<h1>VR-KPI - PA 1</h1>
+<h2>Duliebov Illia - TR-22mp</h2>
+<div id="lightPostion">
+    <p>Light position<p>
+    <label for="lightPostionX">X:</label>
+    <input id="lightPostionX" type="range" min="-20" max="20" step="1" onchange="reDraw()"/>
+    <label for="lightPostionY">Y:</label>
+    <input id="lightPostionY" type="range" min="-20" max="20" step="1" onchange="reDraw()"/>
+    <label for="lightPostionZ">Z:</label>
+    <input id="lightPostionZ" type="range" min="-20" max="20" step="1" onchange="reDraw()"/>
+</div>
+<div id="textureControls">
+
+ 
+    <p id="userCoords"></p>
+</div>
+<div class="cameraControls">
+    <div>
+        <label for ="fov">Eye separation</label>
+        <input id="eyes" type="range" min="0" max="200" step="1" value="70">
+        <span class="sliderValue">0</span>
+    </div>
+    <div>
+        <label for ="fov">Field of View</label>
+        <input id="fov" type="range" min="2" max="3" step="0.05" value="2.2">
+        <span class="sliderValue">0</span>
+    </div>
+    <div>
+        <label for ="fov">Near Clipping distance</label>
+        <input id="near" type="range" min="0" max="20" step="1" value="10">
+        <span class="sliderValue">0</span>
+    </div>
+    <div>
+        <label for ="fov">Convergence</label>
+        <input id="conv" type="range" min="100" max="3000" step="50" value="2000">
+        <span class="sliderValue">0</span>
+    </div>
+</div>
+<div id="canvas-holder">
+   <canvas width="1000" height="1000" id="webglcanvas" style="background-color:black"></canvas>
+</div>
+
+
+</body></html>
