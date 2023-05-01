@@ -228,12 +228,12 @@ function draw() {
 
   // console.log(left, right, bottom, top, near, far);
 
-  let projectionLeft = m4.orthographic(left, right, bottom, top, near, far);
+  let projectionLeft = m4.frustum(left, right, bottom, top, near, far);
 
   left = -c * near / conv;
   right = b * near / conv;
 
-  let projectionRight = m4.orthographic(left, right, bottom, top, near, far);
+  let projectionRight = m4.frustum(left, right, bottom, top, near, far);
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
