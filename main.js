@@ -11,6 +11,12 @@ let video;
 let track
 let background;
 
+let gyroscope = new Gyroscope({frequency:60});
+var previousTimestamp = null;
+var rotationAngle = { x: 0, y: 0, z: 0 };
+
+
+
 const userPoint = { x: 100, y: 100 };
 
 const r = parseFloat(1.0);
@@ -206,6 +212,7 @@ function draw() {
   ratio = 1.0;
   fov = 2.2;
   fov = D.getElementById("fov").value;
+  fov = 1.2;
   spans[1].innerHTML = fov;
   
   let top, bottom, left, right, near, far;
@@ -237,6 +244,10 @@ function draw() {
 
   /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
+  let rotationMatrix = getRotationMatrix(rotationAngle.z, rotationAngle.x, rotationAngle.y);
+  //console.log([gyroscope.z, gyroscope.x, gyroscope.y]);
+  let translationMatrix = m4.translation(0, 0, 3);
+  modelView = m4.multiply(rotationMatrix, translationMatrix);
 
   let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0);
   let translateToPointZero = m4.translation(0.0, 0, 0.0);
@@ -250,9 +261,6 @@ function draw() {
   const modelviewInv = m4.inverse(matAccum1, new Float32Array(16));
   const normalMatrix = m4.transpose(modelviewInv, new Float32Array(16));
 
-  /* Multiply the projection matrix times the modelview matrix to give the
-     combined transformation matrix, and send that to the shader program. */
-  // let modelViewProjection = m4.multiply(projection, matAccum1);
 
   gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
 
@@ -484,9 +492,14 @@ function init() {
   }
 
   spaceball = new TrackballRotator(canvas, draw, 0);
+  
+  gyroscope.addEventListener("reading", (e) => handleGyroscopeReading(e));
+  gyroscope.start();
 
   // draw();
   continiousDraw()
+  
+  
 }
 
 function reDraw() {
@@ -543,4 +556,50 @@ function CreateWebCamTexture() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   return textureID;
+}
+
+function getRotationMatrix(alpha, beta, gamma) {
+  var _x = beta ? beta : 0; // beta value
+  var _y = gamma ? gamma : 0; // gamma value
+  var _z = alpha ? alpha : 0; // alpha value
+
+  var cX = Math.cos(_x);
+  var cY = Math.cos(_y);
+  var cZ = Math.cos(_z);
+  var sX = Math.sin(_x);
+  var sY = Math.sin(_y);
+  var sZ = Math.sin(_z);
+
+  //
+  // ZXY rotation matrix construction.
+  //
+
+  var m11 = cZ * cY - sZ * sX * sY;
+  var m12 = -cX * sZ;
+  var m13 = cY * sZ * sX + cZ * sY;
+
+  var m21 = cY * sZ + cZ * sX * sY;
+  var m22 = cZ * cX;
+  var m23 = sZ * sY - cZ * cY * sX;
+
+  var m31 = -cX * sY;
+  var m32 = sX;
+  var m33 = cX * cY;
+
+  return [m11, m12, m13, 0, 
+		  m21, m22, m23, 0, 
+          m31, m32, m33, 0, 
+          0, 0, 0, 1];
+}
+
+function handleGyroscopeReading(event) {
+    var currentTimestamp = gyroscope.timestamp
+    var deltaT = (previousTimestamp === null) ? 0 : (currentTimestamp - previousTimestamp) / 1000; 
+
+    rotationAngle.x += gyroscope.x * deltaT; 
+    rotationAngle.y += gyroscope.y * deltaT; 
+    rotationAngle.z += gyroscope.z * deltaT; 
+
+
+    previousTimestamp = currentTimestamp;
 }
