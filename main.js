@@ -788,39 +788,44 @@ function addUserInteraction() {
         sphereCenter[0] += 1; 
 		sphereCenter[0] = Math.max(25, Math.min(75, sphereCenter[0]));
 		updateSoundSourcePosition();
+		document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];
 	});
 
 	decrementBtnX.addEventListener('click', function() {
         sphereCenter[0] -= 1;
         sphereCenter[0] = Math.max(25, Math.min(75, sphereCenter[0]));
-		updateSoundSourcePosition();		
+		updateSoundSourcePosition();
+		document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];		
 	});
 	
 	incrementBtnY.addEventListener('click', function() {
         sphereCenter[1] += 1; 
 		sphereCenter[1] = Math.max(25, Math.min(75, sphereCenter[1]));
 		updateSoundSourcePosition();
+		document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];
 	});
 
 	decrementBtnY.addEventListener('click', function() {
         sphereCenter[1] -= 1;
         sphereCenter[1] = Math.max(25, Math.min(75, sphereCenter[1]));
-		updateSoundSourcePosition();		
+		updateSoundSourcePosition();
+		document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];		
 	});
 	
 	incrementBtnZ.addEventListener('click', function() {
         sphereCenter[2] += 1; 
 		sphereCenter[2] = Math.max(-10, Math.min(10, sphereCenter[2]));
 		updateSoundSourcePosition();
+		document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];
 	});
 
 	decrementBtnZ.addEventListener('click', function() {
         sphereCenter[2] -= 1;
         sphereCenter[2] = Math.max(-10, Math.min(10, sphereCenter[2]));
 		updateSoundSourcePosition();
+		document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];
 	});
 	
-	document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];
 	
 	
 }
