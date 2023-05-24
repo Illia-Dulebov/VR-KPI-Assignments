@@ -577,7 +577,7 @@ const LoadTexture = () => {
 window.addEventListener('keydown', function (event) {
   switch (event.code) {
     case 'ArrowUp':
-      console.log('up');
+      userPoint.y = userPoint.y + 1;
       break;
     case 'ArrowDowm':
       userPoint.y = userPoint.y - 1;
