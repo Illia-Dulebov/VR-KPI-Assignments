@@ -20,7 +20,7 @@
 </head>
 <body onload="init()">
 
-<h1>VR-KPI - PA 1</h1>
+<h1>VR-KPI</h1>
 <h2>Duliebov Illia - TR-22mp</h2>
 <div id="lightPostion">
     <p>Light position<p>
@@ -57,9 +57,25 @@
         <input id="conv" type="range" min="100" max="3000" step="50" value="2000">
         <span class="sliderValue">0</span>
     </div>
+	<input type="checkbox" style="width: 20px; height: 20px;" id="filter" checked>Filter
+	<div>
+	<button id="incrementBtnX" style="width: 150px; height: 100px; font-size: 20px;">+x</button>
+    <button id="decrementBtnX" style="width: 150px; height: 100px; font-size: 20px;">-x</button>
+	</div>
+	<div>
+	<button id="incrementBtnY" style="width: 150px; height: 100px; font-size: 20px;">+y</button>
+    <button id="decrementBtnY" style="width: 150px; height: 100px; font-size: 20px;">-y</button>
+	</div>
+	<div>
+	<button id="incrementBtnZ" style="width: 150px; height: 100px; font-size: 20px;">+z</button>
+    <button id="decrementBtnZ" style="width: 150px; height: 100px; font-size: 20px;">-z</button>
+	</div>
+	</div>
+	<h4 id="result"></h4>
+	</div>
 </div>
 <div id="canvas-holder">
-   <canvas width="1000" height="1000" id="webglcanvas" style="background-color:black"></canvas>
+   <canvas width="1000" height="1000" id="webglcanvas" style="background-color:blue"></canvas>
 </div>
 
 

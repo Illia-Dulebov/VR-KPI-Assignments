@@ -15,7 +15,19 @@ let gyroscope = new Gyroscope({frequency:60});
 var previousTimestamp = null;
 var rotationAngle = { x: 0, y: 0, z: 0 };
 
+const audioContext = new AudioContext();
+const panner = audioContext.createPanner();;
+let sourceNode;
+let biquadFilter;
 
+let audioSphere;
+let sphereCenter = [0, 0, 0];
+const displacementScale = 0.5;
+const sphereRadius = 0.1;
+
+var gyroScaleX = 0.5; 
+var gyroScaleY = 0.5; 
+var gyroScaleZ = 0.5; 
 
 const userPoint = { x: 100, y: 100 };
 
@@ -191,7 +203,7 @@ function draw() {
   let D = document;
   let spans = D.getElementsByClassName("sliderValue");
 
-  gl.clearColor(0, 0, 0, 1);
+  gl.clearColor(0, 0, 1, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
   /* Set the values of the projection transformation */
@@ -233,7 +245,6 @@ function draw() {
   left = -b * near / conv;
   right = c * near / conv;
 
-  // console.log(left, right, bottom, top, near, far);
 
   let projectionLeft = m4.frustum(left, right, bottom, top, near, far);
 
@@ -242,12 +253,8 @@ function draw() {
 
   let projectionRight = m4.frustum(left, right, bottom, top, near, far);
 
-  /* Get the view matrix from the SimpleRotator object.*/
   let modelView = spaceball.getViewMatrix();
-  let rotationMatrix = getRotationMatrix(rotationAngle.z, rotationAngle.x, rotationAngle.y);
-  //console.log([gyroscope.z, gyroscope.x, gyroscope.y]);
-  let translationMatrix = m4.translation(0, 0, 3);
-  modelView = m4.multiply(rotationMatrix, translationMatrix);
+ 
 
   let rotateToPointZero = m4.axisRotation([0.707, 0.707, 0], 0);
   let translateToPointZero = m4.translation(0.0, 0, 0.0);
@@ -260,6 +267,7 @@ function draw() {
   let modelViewProjection = m4.multiply(projection, matAccum1);
   const modelviewInv = m4.inverse(matAccum1, new Float32Array(16));
   const normalMatrix = m4.transpose(modelviewInv, new Float32Array(16));
+  
 
 
   gl.uniformMatrix4fv(shProgram.iModelViewProjectionMatrix, false, modelViewProjection);
@@ -277,7 +285,7 @@ function draw() {
   gl.uniform3fv(shProgram.iSpecularColor, [0.5, 1.0, 1.0]);
 
   /* Draw the six faces of a cube, with different colors. */
-  gl.uniform4fv(shProgram.iColor, [1, 1, 1, 1]);
+  gl.uniform4fv(shProgram.iColor, [1, 0, 1, 1]);
 
   const angle = 100;
   gl.uniform1f(shProgram.iFAngleRad, deg2rad(+angle));
@@ -314,7 +322,35 @@ function draw() {
   gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matAccumLeft);
   gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionLeft);
   gl.colorMask(true, false, false, false);
-  surface.Draw();
+  
+  //let rotationMatrix = getRotationMatrix(rotationAngle.z, rotationAngle.x, rotationAngle.y);
+  //console.log([gyroscope.z, gyroscope.x, gyroscope.y]);
+  let translationMatrix1 = m4.translation(0, 0, 3);
+  //modelView = m4.multiply(rotationMatrix, translationMatrix1);
+ 
+  
+  const translationMatrix = m4.translation(sphereCenter[0], sphereCenter[1], sphereCenter[2]);
+  const scaleMatrix = m4.scaling(0.01, 0.01, 0.01); 
+
+  let matAccumAudioSphere = m4.multiply(rotateToPointZero, modelView);
+  let matAccumTranslationAudioSphere = m4.multiply(translationMatrix, matAccumAudioSphere);
+  let matAccumZeroAudioSphere = m4.multiply(translateToPointZero, matAccumTranslationAudioSphere);
+  matAccumZeroAudioSphere = m4.multiply(scaleMatrix, matAccumZeroAudioSphere);
+
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+
+  gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projection);
+  gl.uniformMatrix4fv(shProgram.iModelViewMatrix, false, matAccumZeroAudioSphere);
+  
+  
+  gl.uniform3fv(shProgram.iColor, [1, 0, 0, 1]);
+
+  audioSphere.Draw();
+  
+  gl.uniform3fv(shProgram.iColor, [1, 0, 0, 1]);
+  
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  
 
   gl.clear(gl.DEPTH_BUFFER_BIT);
 
@@ -322,6 +358,7 @@ function draw() {
   gl.uniformMatrix4fv(shProgram.iProjectionMatrix, false, projectionRight);
   gl.colorMask(false, true, true, false);
   surface.Draw();
+  
 
   gl.colorMask(true, true, true, true);
 }
@@ -413,6 +450,15 @@ function initGL() {
   surface = new Model('Surface');
   const { vertexList, textureList } = CreateSurfaceData();
   surface.BufferData(CreateSurfaceData()[0], CreateSurfaceData()[1]);
+    
+  var sphereData = generateSphere(10, 30, 30);
+  var sphereVertices = sphereData.vertices;
+  var sphereTextureCoords = sphereData.textureCoords;
+  
+  audioSphere = new Model('Audio');
+  audioSphere.BufferData(sphereVertices, sphereTextureCoords);
+  
+  
   background = new Model('Back');
   background.BufferData([0.0,0.0,0.0,1.0,0.0,0.0,1.0,1.0,0.0,1.0,1.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0],[1,1,0,1,0,0,0,0,1,0,1,1]);
 
@@ -495,15 +541,21 @@ function init() {
   
   gyroscope.addEventListener("reading", (e) => handleGyroscopeReading(e));
   gyroscope.start();
+  
+  fetchAudio();
+  checkboxFunc();
+  addUserInteraction();
+  
+  document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];
 
-  // draw();
-  continiousDraw()
+  continiousDraw();
   
   
 }
 
 function reDraw() {
   surface.BufferData(CreateSurfaceData()[0], CreateSurfaceData()[1]);
+  
   draw();
 }
 
@@ -525,7 +577,7 @@ const LoadTexture = () => {
 window.addEventListener('keydown', function (event) {
   switch (event.code) {
     case 'ArrowUp':
-      userPoint.y = userPoint.y + 1;
+      console.log('up');
       break;
     case 'ArrowDowm':
       userPoint.y = userPoint.y - 1;
@@ -600,6 +652,175 @@ function handleGyroscopeReading(event) {
     rotationAngle.y += gyroscope.y * deltaT; 
     rotationAngle.z += gyroscope.z * deltaT; 
 
-
     previousTimestamp = currentTimestamp;
+
+	var scaledX = gyroscope.y * gyroScaleX;
+    var scaledY = gyroscope.x * gyroScaleY;
+    var scaledZ = gyroscope.z * gyroScaleZ;
+	
+	sphereCenter[0] += scaledX;
+	sphereCenter[1] += scaledY;
+    sphereCenter[2] += scaledZ;
+	
+	sphereCenter[0] = Math.max(25, Math.min(75, sphereCenter[0]));
+	sphereCenter[1] = Math.max(25, Math.min(75, sphereCenter[1]));
+    sphereCenter[2] = Math.max(-10, Math.min(10, sphereCenter[2]));
+	
+    var radius = 25; 
+    var theta = gyroscope.x * Math.PI / 180; 
+    var phi = gyroscope.y * Math.PI / 180; 
+  
+    sphereCenter[0] = sphereCenter[0] + radius * Math.sin(theta) * Math.cos(phi);
+    sphereCenter[1] = sphereCenter[1] + radius * Math.sin(theta) * Math.sin(phi);
+    sphereCenter[2] = sphereCenter[2] + radius * Math.cos(theta);
+	
+	
+	updateSoundSourcePosition();
+	
+	document.getElementById("result").textContent = "x: " + sphereCenter[0] + " " + "y: " + sphereCenter[1] + " " + "z: " + sphereCenter[2];
+	
+	//console.log([sphereCenter[0], sphereCenter[1], sphereCenter[2]]);
+}
+
+function fetchAudio() {
+    fetch('space_song.mp3')
+  .then(response => response.arrayBuffer())
+  .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+  .then(audioBuffer => {
+ 
+    playAudioBuffer(audioBuffer);
+  }).catch(error => console.error('Error loading audio file:', error));
+}
+
+function playAudioBuffer(audioBuffer) {
+  sourceNode = audioContext.createBufferSource();
+  
+  setFilter();
+  
+  checkboxFunc();
+  
+  
+  sourceNode.buffer = audioBuffer;
+  sourceNode.connect(audioContext.destination);
+  sourceNode.connect(panner);
+  sourceNode.start();
+  
+  panner.connect(audioContext.destination);
+  
+  
+  const listener = audioContext.listener;
+  listener.setPosition(sphereCenter[0], sphereCenter[1], sphereCenter[2]);
+  listener.setOrientation(0, 0, -1, 0, 1, 0);
+}
+
+function updateSoundSourcePosition() {
+  panner.setPosition(sphereCenter[0], sphereCenter[1], sphereCenter[2]);
+}
+
+function generateSphere(radius, latitudeBands, longitudeBands) {
+  var vertices = [];
+  var textureCoords = [];
+
+  for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+    var theta = latNumber * Math.PI / latitudeBands;
+    var sinTheta = Math.sin(theta);
+    var cosTheta = Math.cos(theta);
+
+    for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+      var phi = longNumber * 2 * Math.PI / longitudeBands;
+      var sinPhi = Math.sin(phi);
+      var cosPhi = Math.cos(phi);
+
+      var x = cosPhi * sinTheta;
+      var y = cosTheta;
+      var z = sinPhi * sinTheta;
+      var u = 1 - (longNumber / longitudeBands);
+      var v = 1 - (latNumber / latitudeBands);
+
+      vertices.push(radius * x, radius * y, radius * z);
+      textureCoords.push(u, v);
+    }
+  }
+
+  return {
+    vertices: vertices,
+    textureCoords: textureCoords
+  };
+}
+
+function setFilter() {
+  biquadFilter = audioContext.createBiquadFilter();
+	
+  biquadFilter.connect(audioContext.destination);
+  
+  biquadFilter.type = 'notch';
+  biquadFilter.frequency.value = 2440;
+  biquadFilter.gain.value = 50;
+  
+  panner.connect(biquadFilter);
+}
+
+function checkboxFunc() {
+	let filterBool = document.getElementById('filter');
+    filterBool.addEventListener('change', function() {
+        if (filterBool.checked) {
+            panner.disconnect();
+            setFilter();
+        } else {
+            panner.disconnect();
+            panner.connect(audioContext.destination);
+        }
+    });
+}
+
+function addUserInteraction() {
+	var incrementBtnX = document.getElementById('incrementBtnX');
+    var decrementBtnX = document.getElementById('decrementBtnX');
+	
+	var incrementBtnY = document.getElementById('incrementBtnY');
+    var decrementBtnY = document.getElementById('decrementBtnY');
+	
+	var incrementBtnZ = document.getElementById('incrementBtnZ');
+    var decrementBtnZ = document.getElementById('decrementBtnZ');
+
+
+	incrementBtnX.addEventListener('click', function() {
+        sphereCenter[0] += 1; 
+		sphereCenter[0] = Math.max(25, Math.min(75, sphereCenter[0]));
+		updateSoundSourcePosition();
+	});
+
+	decrementBtnX.addEventListener('click', function() {
+        sphereCenter[0] -= 1;
+        sphereCenter[0] = Math.max(25, Math.min(75, sphereCenter[0]));
+		updateSoundSourcePosition();		
+	});
+	
+	incrementBtnY.addEventListener('click', function() {
+        sphereCenter[1] += 1; 
+		sphereCenter[1] = Math.max(25, Math.min(75, sphereCenter[1]));
+		updateSoundSourcePosition();
+	});
+
+	decrementBtnY.addEventListener('click', function() {
+        sphereCenter[1] -= 1;
+        sphereCenter[1] = Math.max(25, Math.min(75, sphereCenter[1]));
+		updateSoundSourcePosition();		
+	});
+	
+	incrementBtnZ.addEventListener('click', function() {
+        sphereCenter[2] += 1; 
+		sphereCenter[2] = Math.max(-10, Math.min(10, sphereCenter[2]));
+		updateSoundSourcePosition();
+	});
+
+	decrementBtnZ.addEventListener('click', function() {
+        sphereCenter[2] -= 1;
+        sphereCenter[2] = Math.max(-10, Math.min(10, sphereCenter[2]));
+		updateSoundSourcePosition();
+	});
+	
+	document.getElementById("result").textContent = "x: " + sphereCenter[0] + "y: " + sphereCenter[1] + "z: " + sphereCenter[2];
+	
+	
 }
