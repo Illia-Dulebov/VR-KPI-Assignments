@@ -717,34 +717,34 @@ function updateSoundSourcePosition() {
   panner.setPosition(sphereCenter[0], sphereCenter[1], sphereCenter[2]);
 }
 
-function generateSphere(radius, latitude, longitude) {
-  var positions = [];
-  var textureCoordinates = [];
+function generateSphere(radius, latitudeSegments, longitudeSegments) {
+  var vertices = [];
+  var textureCoords = [];
 
-  for (var latNumber = 0; latNumber <= latitude; latNumber++) {
-    var theta = latNumber * Math.PI / latitude;
+  for (var latIndex = 0; latIndex <= latitudeSegments; latIndex++) {
+    var theta = latIndex * Math.PI / latitudeSegments;
     var sinTheta = Math.sin(theta);
     var cosTheta = Math.cos(theta);
 
-    for (var longNumber = 0; longNumber <= longitude; longNumber++) {
-      var phi = longNumber * 2 * Math.PI / longitude;
+    for (var longIndex = 0; longIndex <= longitudeSegments; longIndex++) {
+      var phi = longIndex * 2 * Math.PI / longitudeSegments;
       var sinPhi = Math.sin(phi);
       var cosPhi = Math.cos(phi);
 
       var x = cosPhi * sinTheta;
       var y = cosTheta;
       var z = sinPhi * sinTheta;
-      var u = 1 - (longNumber / longitude);
-      var v = 1 - (latNumber / latitude);
+      var u = 1 - (longIndex / longitudeSegments);
+      var v = 1 - (latIndex / latitudeSegments);
 
-      positions.push(radius * x, radius * y, radius * z);
-      textureCoordinates.push(u, v);
+      vertices.push(radius * x, radius * y, radius * z);
+      textureCoords.push(u, v);
     }
   }
 
   return {
-    positions: positions,
-    textureCoordinates: textureCoordinates
+    vertices: vertices,
+    textureCoords: textureCoords
   };
 }
 
