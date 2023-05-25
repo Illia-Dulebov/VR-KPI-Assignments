@@ -654,8 +654,8 @@ function handleGyroscopeReading(event) {
 
     previousTimestamp = currentTimestamp;
 
-	var scaledX = gyroscope.y * gyroScaleX;
-    var scaledY = gyroscope.x * gyroScaleY;
+	var scaledX = gyroscope.x * gyroScaleX;
+    var scaledY = gyroscope.y * gyroScaleY;
     var scaledZ = gyroscope.z * gyroScaleZ;
 	
 	sphereCenter[0] += scaledX;
@@ -754,7 +754,7 @@ function setFilter() {
   biquadFilter.connect(audioContext.destination);
   
   biquadFilter.type = 'notch';
-  biquadFilter.frequency.value = 2440;
+  biquadFilter.frequency.value = 440;
   biquadFilter.gain.value = 50;
   
   panner.connect(biquadFilter);
